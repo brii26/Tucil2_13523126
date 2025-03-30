@@ -8,7 +8,7 @@ public class Main{
     
         int inputMode = -1;
         double treshold = -1;
-        double minimumBlockSize = -1.0;
+        int minimumBlockSize = -1;
         double compressionPercentageTarget = -1.0;
         boolean countCompression = true;
         String absoluteImageOutputAddress ;
@@ -66,22 +66,22 @@ public class Main{
 
         // Input minimum block size
         do {
-            System.out.print("Minimum Block Size : ");
+            System.out.print("Minimum Block Size (integer): ");
             
-            if (input.hasNextDouble()) {
-                minimumBlockSize = input.nextDouble();
+            if (input.hasNextInt()) {
+                minimumBlockSize = input.nextInt();
                 input.nextLine(); 
                 
                 if (minimumBlockSize > 0) {
                     break; 
                 } else {
-                    System.out.println("invalid input : block size <= 0");
+                    System.out.println("Invalid input: block size <= 0");
                 }
             } else {
                 System.out.println("Invalid input");
                 input.nextLine();
             }
-        } while (minimumBlockSize <= 0); 
+        } while (minimumBlockSize <= 0);
 
 
         // Input percentage compression target
@@ -112,9 +112,12 @@ public class Main{
             absoluteImageOutputAddress = input.nextLine();
             if (absoluteImageOutputAddress.toLowerCase().matches(".*\\.(png|jpg|jpeg)$")) {
                 File file = new File(absoluteImageOutputAddress);
-                File parentDir = file.getParentFile();
-
-                if (parentDir.exists() && parentDir.isDirectory()) {
+                File parentDir = file.getAbsoluteFile().getParentFile();
+                
+                if (parentDir == null) {
+                    System.out.println("Invalid input: use an absolute path.");
+                }
+                else if (parentDir.exists() && parentDir.isDirectory()) {
                     if (file.exists()) {
                         System.out.println("File already exists!");
                     } else {
@@ -134,9 +137,11 @@ public class Main{
             absoluteGifOutputAddress = input.nextLine();
             if (absoluteGifOutputAddress.toLowerCase().endsWith(".gif")) {
                 File file = new File(absoluteGifOutputAddress);
-                File parentDir = file.getParentFile();
-
-                if (parentDir.exists() && parentDir.isDirectory()) {
+                File parentDir = file.getAbsoluteFile().getParentFile();
+                if (parentDir == null) {
+                    System.out.println("Invalid input: use an absolute path.");
+                }
+                else if (parentDir.exists() && parentDir.isDirectory()) {
                     if (file.exists()) {
                         System.out.println("File already exists!");
                     } else {
@@ -150,12 +155,7 @@ public class Main{
             }
         } while (true);
 
-
-        //variable
-        int initialWidth = imageFile.getHeight();
-        int initialHeight = imageFile.getWidth();
-
-
         input.close();
+
     }
 }
