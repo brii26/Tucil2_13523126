@@ -1,11 +1,12 @@
 import java.awt.Color;
+import java.awt.image.BufferedImage;
 
 public class QuadTree {
 
     // Class Point
     public static class Point{
-        public int x; 
-        public int y;
+        private int x; 
+        private int y;
 
         //Constructor for Point
         Point(int x, int y){
@@ -16,9 +17,9 @@ public class QuadTree {
 
     // Class RGB
     public static class RGB{
-        public int red;
-        public int green;
-        public int blue;
+        private int red;
+        private int green;
+        private int blue;
 
         //Constructor for RGB
         RGB(int r, int g, int b){
@@ -39,36 +40,12 @@ public class QuadTree {
     private QuadTree southWest;
 
     // Constructor for QuadTree
-    QuadTree(int w, int h, QuadTree ne, QuadTree nw, QuadTree se, QuadTree sw){
+    public QuadTree(int w , int h){
         this.width = w;
         this.height = h;
-        this.northEast = ne;
-        this.northWest = nw;
-        this.southEast = se;
-        this.southWest = sw;
-        setPoint(width/2, height/2);
-
-        //set intensity value
-        int axis = this.getAxis();
-        int ordinate = this.getOrdinate();
-        int redValue = 0;
-        int greenValue = 0;
-        int blueValue = 0;
-        int n = this.width * this.height;
-        for (int y = ordinate - height/2; y < ordinate + height/2; y++){
-            for ( int x = axis - width/2 ; x < axis + width/2 ; x++){
-                int pixelColor = Main.imageFile.getRGB(x,y);
-                Color color = new Color(pixelColor);
-                redValue += color.getRed();
-                greenValue += color.getGreen();
-                blueValue += color.getBlue();
-            }
-        }
-        int avg_red = redValue/n;
-        int avg_blue = blueValue/n;
-        int avg_green = greenValue/n;
-
-        setIntensityValue (avg_red, avg_green, avg_blue);
+        setChild(null,null,null,null);
+        this.setPoint((int) Math.floor(this.width/2.0), (int) Math.ceil(this.height/2.0));
+        this.setIntensityValue();
     }
 
     // setter and getter
@@ -85,8 +62,7 @@ public class QuadTree {
         return this.height;
     }
     public void setPoint(int x, int y){
-        Point newPoint = new Point(x,y);
-        this.point = newPoint;
+        this.point = new Point(x,y);
     }
     public int getAxis(){
         return this.point.x;
@@ -103,10 +79,24 @@ public class QuadTree {
     public int getBlueIntensityValue(){
         return this.intensityValue.blue;
     }
-    public void setIntensityValue(int red, int green , int blue){
-        this.intensityValue.red = red;
-        this.intensityValue.green = green;
-        this.intensityValue.blue = blue;
+    public void setIntensityValue(){
+        int redValue = 0;
+        int greenValue = 0;
+        int blueValue = 0;
+        int n = this.getPixel();
+        for (int y = this.startY(); y < this.endY(); y++){
+            for ( int x = this.startX() ; x < this.endX() ; x++){
+                int pixelColor = Main.imageFile.getRGB(x,y);
+                Color color = new Color(pixelColor);
+                redValue += color.getRed();
+                greenValue += color.getGreen();
+                blueValue += color.getBlue();
+            }
+        }
+        int avg_red = redValue/n;
+        int avg_blue = blueValue/n;
+        int avg_green = greenValue/n;
+        this.intensityValue = new RGB(avg_red, avg_green, avg_blue);
     }
     public QuadTree getNorthEast(){
         return this.northEast;
@@ -120,15 +110,124 @@ public class QuadTree {
     public QuadTree getSouthWest(){
         return this.southWest;
     }
+    public void setChild(QuadTree ne, QuadTree nw, QuadTree se, QuadTree sw){
+        this.northEast = ne;
+        this.northWest = nw;
+        this.southEast = se;
+        this.southWest = sw;
+    }
+
+    // utility method
     public int getPixel(){
         return this.width * this.height;
     }
+    public int getArea(){
+        return this.getPixel();
+    }
+    public int startX(){
+        return Math.max(this.getAxis() - (int) Math.floor(this.getWidth()/2.0),0);
+    }
+    public int startY(){
+        return Math.max(this.getOrdinate() - (int) Math.ceil(this.getHeight()/2.0),0);
+    }
+    public int endX(){
+        return Math.min(this.getAxis() + (int) Math.ceil(this.getWidth()/2.0), Main.imageFile.getWidth());
+    }
+    public int endY(){
+        return Math.min(this.getOrdinate() + (int) Math.floor(this.getHeight()/2.0), Main.imageFile.getHeight());
+    }
+    public boolean isLeaf(){
+        return this.northEast == null && this.northWest == null && this.southEast == null && this.southWest == null;
+    }
 
-    // // Method to recreate new compressed QuadTree
-    // public static QuadTree compressedQuadTree(int input, int x_coordinate, int y_coordinate, int height, int width, double treshold, double minimumBlockSize){
-    //     //construct main node
-    //     Point initialPoint = new Point(width/2, height/2);
-    //     QuadTree initialImage = new QuadTree(initialPoint, width, height, getAverage(x_coordinate,y_coordinate,width,height))
-    // }
+    // Method to recreate new compressed QuadTree ( divide and conquer algo)
+    public void compressQuadTree(int inputMode, double treshold, int blockSizeConstrain){ 
 
+        // end recursion if pixel size can no longer be devided
+        if(this.getWidth() < 2 || this.getHeight() < 2){
+            return;
+        }
+
+        // subdivide
+        int base_axis = this.getAxis();
+        int base_ordinate = this.getOrdinate();
+
+        int floor_width = (int) Math.floor(this.getWidth()/2.0);
+        int ceil_width = (int) Math.ceil(this.getWidth()/2.0);
+        int ceil_height = (int) Math.ceil(this.getHeight()/2.0);
+        int floor_height = (int) Math.floor(this.getHeight()/2.0);
+
+        int south_ordinate = base_ordinate + (int) Math.ceil(0.5 * floor_height);
+        int north_ordinate = base_ordinate - (int) Math.floor(0.5 * ceil_height);
+        int west_axis = base_axis - (int) Math.ceil(0.5 * floor_width);
+        int east_axis = base_axis + (int) Math.floor(0.5 * ceil_width);
+
+        QuadTree nw = new QuadTree(floor_width, ceil_height);
+        nw.setPoint(west_axis, north_ordinate);
+        nw.setIntensityValue();
+
+        QuadTree ne = new QuadTree(ceil_width, ceil_height);
+        ne.setPoint(east_axis, north_ordinate);
+        ne.setIntensityValue();
+
+        QuadTree se = new QuadTree(ceil_width, floor_height);
+        se.setPoint(east_axis, south_ordinate);
+        se.setIntensityValue();
+
+        QuadTree sw = new QuadTree(floor_width, floor_height);
+        sw.setPoint(west_axis, south_ordinate);
+        sw.setIntensityValue();
+
+        if(this.getAxis() >= 10 && this.getOrdinate() >= 10){
+            System.out.print("x : " + this.startX() + " - " + this.endX() + " || ");
+            System.out.println("y : " + this.startY() + " - " + this.endY());
+        }
+
+        // constrains
+        if(nw.getArea() > blockSizeConstrain && ErrorMeasurement.errorValue(nw,inputMode) > treshold){
+            nw.compressQuadTree(inputMode, treshold, blockSizeConstrain);
+        }
+
+        if(ne.getArea() > blockSizeConstrain && ErrorMeasurement.errorValue(ne,inputMode) > treshold){
+            ne.compressQuadTree(inputMode, treshold, blockSizeConstrain);
+        }
+
+        if(se.getArea() > blockSizeConstrain && ErrorMeasurement.errorValue(se,inputMode) > treshold){
+            se.compressQuadTree(inputMode, treshold, blockSizeConstrain);
+        }
+
+        if(sw.getArea() > blockSizeConstrain && ErrorMeasurement.errorValue(sw,inputMode) > treshold){
+            sw.compressQuadTree(inputMode, treshold, blockSizeConstrain);
+        }
+        
+        // reconstruct the children tree
+        this.setChild(ne,nw,se,sw);
+        return;
+    }
+
+    public void reconstructQuadTree(BufferedImage output) {
+        if(this.isLeaf()){
+            for(int y = this.startY(); y < this.endY(); y++){
+                for(int x = this.startX(); x < this.endX(); x++){
+                    Color newColor = new Color(this.getRedIntensityValue(), this.getGreenIntensityValue(), this.getBlueIntensityValue());
+                    output.setRGB(x,y,newColor.getRGB());
+                }
+            }
+            return;
+        }
+        else{
+            if(this.northEast != null){
+                this.northEast.reconstructQuadTree(output);
+            }
+            if(this.northWest != null){
+                this.northWest.reconstructQuadTree(output);
+            }
+            if(this.southEast != null){
+                this.southEast.reconstructQuadTree(output);
+            }
+            if(this.southWest != null){
+                this.southWest.reconstructQuadTree(output);
+            }
+        }
+    }
 }

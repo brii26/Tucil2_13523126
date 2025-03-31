@@ -1,6 +1,7 @@
 import java.io.File;
 import javax.imageio.ImageIO;
 import java.io.IOException;
+import java.awt.image.BufferedImage;
 
 public class ProcessImage {
 
@@ -28,4 +29,23 @@ public class ProcessImage {
         return fileName.endsWith(".jpg") || fileName.endsWith(".png")  || fileName.endsWith(".jpeg");
     }
 
+    public static boolean saveImage(BufferedImage image, String outputPath) {
+        try {
+            File outputFile = new File(outputPath);
+            String lowerPath = outputPath.toLowerCase();
+            String format;
+            if(lowerPath.endsWith(".png")){
+                format = "png";
+            } else if(lowerPath.endsWith(".jpg") || lowerPath.endsWith(".jpeg")){
+                format = "jpg";
+            } else {
+                System.out.println("Save Failed!");
+                return false;
+            }
+            return ImageIO.write(image, format, outputFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

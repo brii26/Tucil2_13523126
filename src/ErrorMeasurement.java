@@ -6,8 +6,8 @@ class ErrorMeasurement{
     public static double variance(QuadTree qt){
         double[] variance_value = {0,0,0};
         int n = qt.getPixel();
-        for ( int y = qt.getOrdinate() - qt.getHeight()/2 ; y < qt.getOrdinate() + qt.getHeight()/2 ; y++){
-            for ( int x = qt.getAxis() - qt.getWidth()/2; x < qt.getAxis() + qt.getWidth()/2 ; x++){
+        for ( int y = qt.startY(); y < qt.endY() ; y++){
+            for ( int x = qt.startX(); x < qt.endX() ; x++){
                 int pixelColor = Main.imageFile.getRGB(x,y);
                 Color color = new Color(pixelColor);
                 variance_value[0] += Math.pow((color.getRed() - qt.getRedIntensityValue()),2);
@@ -22,8 +22,8 @@ class ErrorMeasurement{
     public static double meanAbsoluteDeviation(QuadTree qt){
         double[] mad_value = {0,0,0};
         int n = qt.getPixel();
-        for ( int y = qt.getOrdinate() - qt.getHeight()/2 ; y < qt.getOrdinate() + qt.getHeight()/2 ; y++){
-            for (int x  = qt.getAxis() - qt.getWidth()/2 ; x < qt.getAxis() + qt.getWidth()/2 ; x++){
+        for ( int y = qt.startY(); y < qt.endY() ; y++){
+            for (int x  = qt.startX() ; x < qt.endX() ; x++){
                 int pixelColor = Main.imageFile.getRGB(x,y);
                 Color color = new Color(pixelColor);
                 mad_value[0] += Math.abs(color.getRed() - qt.getRedIntensityValue());
@@ -43,8 +43,8 @@ class ErrorMeasurement{
         int max_blue = 0;
         int min_blue = 255;
 
-        for (int y = qt.getOrdinate() - qt.getHeight()/2 ; y < qt.getOrdinate() + qt.getHeight()/2 ; y++){
-            for ( int x = qt.getAxis() - qt.getWidth()/2 ; x < qt.getAxis() + qt.getWidth()/2 ; x++){
+        for (int y = qt.startY() ; y < qt.endY() ; y++){
+            for ( int x = qt.startX() ; x < qt.endX() ; x++){
                 int pixelColor = Main.imageFile.getRGB(x,y);
                 Color color = new Color (pixelColor);
                 
@@ -77,8 +77,8 @@ class ErrorMeasurement{
     public static double entropy(QuadTree qt){
         int n = qt.getPixel();
         int[] histogram = new int[256];
-        for ( int y = qt.getOrdinate() - qt.getHeight()/2 ; y < qt.getOrdinate() + qt.getHeight()/2 ; y++){
-            for (int x = qt.getAxis() - qt.getWidth()/2 ; x < qt.getAxis() + qt.getWidth()/2; x++){
+        for ( int y = qt.startY() ; y < qt.endY() ; y++){
+            for (int x = qt.startX() ; x < qt.endX(); x++){
                 int pixelColor = Main.imageFile.getRGB(x,y);
                 Color color = new Color(pixelColor);
                 int rgbValue = ((color.getRed() + color.getGreen() + color.getBlue()) / 3);
@@ -100,7 +100,7 @@ class ErrorMeasurement{
         return 0;
     }
 
-    public double errorValue(QuadTree qt, int input){
+    public static double errorValue(QuadTree qt, int input){
         if(input == 1){
             return variance(qt);
         }
@@ -116,6 +116,7 @@ class ErrorMeasurement{
         else if (input == 5){
             return 0.0;
         }
-        return -1.0;
+        return 0.0;
     }
+
 }

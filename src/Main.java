@@ -5,7 +5,8 @@ import java.awt.image.BufferedImage;
 public class Main{
     public static BufferedImage imageFile;
     public static void main(String args[]){
-    
+        
+
         int inputMode = -1;
         double treshold = -1;
         int minimumBlockSize = -1;
@@ -156,6 +157,20 @@ public class Main{
         } while (true);
 
         input.close();
+
+        // output image & assign default value manually
+        BufferedImage output = new BufferedImage(imageFile.getWidth(), imageFile.getHeight(), imageFile.getType());
+
+        // compress
+        QuadTree qt = new QuadTree(imageFile.getWidth(), imageFile.getHeight());
+        qt.compressQuadTree(inputMode, treshold, minimumBlockSize);
+
+        // reconstruct
+        qt.reconstructQuadTree(output);
+
+        ProcessImage.saveImage(output, absoluteImageOutputAddress);
+
+        System.out.println("success");
 
     }
 }
