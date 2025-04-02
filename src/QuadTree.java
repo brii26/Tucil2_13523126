@@ -178,33 +178,47 @@ public class QuadTree {
         sw.setPoint(west_axis, south_ordinate);
         sw.setIntensityValue();
 
-        if(this.getAxis() >= 10 && this.getOrdinate() >= 10){
-            System.out.print("x : " + this.startX() + " - " + this.endX() + " || ");
-            System.out.println("y : " + this.startY() + " - " + this.endY());
-        }
-
-        // constrains
-        if(nw.getArea() > blockSizeConstrain && ErrorMeasurement.errorValue(nw,inputMode) > treshold){
-            nw.compressQuadTree(inputMode, treshold, blockSizeConstrain);
-        }
-
-        if(ne.getArea() > blockSizeConstrain && ErrorMeasurement.errorValue(ne,inputMode) > treshold){
-            ne.compressQuadTree(inputMode, treshold, blockSizeConstrain);
-        }
-
-        if(se.getArea() > blockSizeConstrain && ErrorMeasurement.errorValue(se,inputMode) > treshold){
-            se.compressQuadTree(inputMode, treshold, blockSizeConstrain);
-        }
-
-        if(sw.getArea() > blockSizeConstrain && ErrorMeasurement.errorValue(sw,inputMode) > treshold){
-            sw.compressQuadTree(inputMode, treshold, blockSizeConstrain);
-        }
-        
-        // reconstruct the children tree
         this.setChild(ne,nw,se,sw);
+        
+        // constrains
+        if(inputMode != 5){
+            if(nw.getArea() > blockSizeConstrain && ErrorMeasurement.errorValue(nw,inputMode) > treshold){
+                nw.compressQuadTree(inputMode, treshold, blockSizeConstrain);
+            }
+
+            if(ne.getArea() > blockSizeConstrain && ErrorMeasurement.errorValue(ne,inputMode) > treshold){
+                ne.compressQuadTree(inputMode, treshold, blockSizeConstrain);
+            }
+
+            if(se.getArea() > blockSizeConstrain && ErrorMeasurement.errorValue(se,inputMode) > treshold){
+                se.compressQuadTree(inputMode, treshold, blockSizeConstrain);
+            }
+
+            if(sw.getArea() > blockSizeConstrain && ErrorMeasurement.errorValue(sw,inputMode) > treshold){
+                sw.compressQuadTree(inputMode, treshold, blockSizeConstrain);
+            }
+        }
+        else{ // SSIM method, slight different
+            if(nw.getArea() > blockSizeConstrain && ErrorMeasurement.errorValue(this,inputMode) > treshold){
+                nw.compressQuadTree(inputMode, treshold, blockSizeConstrain);
+            }
+
+            if(ne.getArea() > blockSizeConstrain && ErrorMeasurement.errorValue(this,inputMode) > treshold){
+                ne.compressQuadTree(inputMode, treshold, blockSizeConstrain);
+            }
+
+            if(se.getArea() > blockSizeConstrain && ErrorMeasurement.errorValue(this,inputMode) > treshold){
+                se.compressQuadTree(inputMode, treshold, blockSizeConstrain);
+            }
+
+            if(sw.getArea() > blockSizeConstrain && ErrorMeasurement.errorValue(this,inputMode) > treshold){
+                sw.compressQuadTree(inputMode, treshold, blockSizeConstrain);
+            }
+        }
         return;
     }
 
+    // Reconstruct QuadTree to image file after compression
     public void reconstructQuadTree(BufferedImage output) {
         if(this.isLeaf()){
             for(int y = this.startY(); y < this.endY(); y++){
@@ -228,6 +242,35 @@ public class QuadTree {
             if(this.southWest != null){
                 this.southWest.reconstructQuadTree(output);
             }
+        }
+    }
+
+    // Maximum QuadTree depth
+    public int getDepth(){
+        if (this.isLeaf()){
+            return 1;
+        }
+        else{
+            int depthNE = (this.northEast == null) ? 0 : this.northEast.getDepth();
+            int depthNW = (this.northWest == null) ? 0 : this.northWest.getDepth();
+            int depthSE = (this.southEast == null) ? 0 : this.southEast.getDepth();
+            int depthSW = (this.southWest == null) ? 0 : this.southWest.getDepth();
+            return 1 + Math.max(depthNE, Math.max(depthNW, Math.max(depthSE, depthSW)));
+        }
+    }
+
+    // Get total ammount of QuadTree nodes
+    public int getNodes(){
+        if(this.isLeaf()){
+            return 1;
+        }else{
+            int count = 1;
+            if(this.northEast != null) count+= this.northEast.getNodes();
+            if(this.northWest != null) count+= this.northWest.getNodes();
+            if(this.southEast != null) count+= this.southEast.getNodes();
+            if(this.southWest != null) count+= this.southWest.getNodes();
+
+            return count;
         }
     }
 }

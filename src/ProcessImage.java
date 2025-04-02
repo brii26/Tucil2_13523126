@@ -1,7 +1,8 @@
 import java.io.File;
-import javax.imageio.ImageIO;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
 
 public class ProcessImage {
 
@@ -29,6 +30,7 @@ public class ProcessImage {
         return fileName.endsWith(".jpg") || fileName.endsWith(".png")  || fileName.endsWith(".jpeg");
     }
 
+    //Save Image
     public static boolean saveImage(BufferedImage image, String outputPath) {
         try {
             File outputFile = new File(outputPath);
@@ -46,6 +48,30 @@ public class ProcessImage {
         } catch (IOException e) {
             e.printStackTrace();
             return false;
+        }
+    }
+
+    // get Encoded Image Size (BONUS)
+    public static long getImageSize(BufferedImage image, String outputPath) {
+        String lowerPath = outputPath.toLowerCase();
+        String format;
+        if (lowerPath.endsWith(".png")) {
+            format = "png";
+        } else if (lowerPath.endsWith(".jpg") || lowerPath.endsWith(".jpeg")) {
+            format = "jpg";
+        } else {
+            return -1;
+        }
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(image, format, baos);
+            baos.flush();
+            long size = baos.size();
+            baos.close();
+            return size;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return -1;
         }
     }
 }
