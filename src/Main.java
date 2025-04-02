@@ -1,21 +1,23 @@
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
+import javax.imageio.stream.FileImageOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.awt.image.BufferedImage;
 
 public class Main{
     public static BufferedImage imageFile;
-    public static void main(String args[]){
-        
 
+    public static void main(String args[]){    
         int inputMode = -1;
         double treshold = -1;
         int minimumBlockSize = -1;
         double compressionPercentageTarget = -1.0;
         boolean countCompression = true;
         String absoluteImageInputAddress;
-        String absoluteImageOutputAddress ;
-        String absoluteGifOutputAddress ;
-
+        String absoluteImageOutputAddress;
+        String absoluteGifOutputAddress;
 
         Scanner input = new Scanner(System.in);
 
@@ -56,7 +58,7 @@ public class Main{
             if(inputMode == 1){
                 System.out.print("Variance (ideal range [0..16384)) : "); // 16384 -> 128^2
             }else if(inputMode == 2){
-                System.out.print("Mean Absolute Deviation (ideal range [0..255]) : ");
+                System.out.print("Mean Absolute Deviation (ideal range [0..127.5]) : ");
             }else if(inputMode == 3){
                 System.out.print("Max Pixel Difference (ideal range [0..255]) : ");
             }else if(inputMode == 4){
@@ -176,15 +178,15 @@ public class Main{
         int max_iteration = 30; 
         long inputImageSize = ProcessImage.getImageSize(imageFile, absoluteImageInputAddress);
         long outputImageSize = -1;
-        double delta_change;
-        double deltaToleranceToTarget = 100;
+        double delta_change = -1;
+        double deltaToleranceToTarget = (inputMode != 5) ? 100 : 500;
         double expectedOutputSize = inputImageSize * (1 - compressionPercentageTarget);
         boolean surpassTarget = false;
         boolean firstIteration = true;
 
         // Delta change for threshold initial change
         if(inputMode == 1) delta_change = 8192;
-        else if(inputMode == 2) delta_change = 127;
+        else if(inputMode == 2) delta_change = 63.5;
         else if(inputMode == 3) delta_change = 127;
         else if(inputMode == 4) delta_change = 4;
         else if(inputMode == 5) delta_change = .5;
@@ -206,23 +208,23 @@ public class Main{
             int countSameOutputSize = 0;
 
             // loop for compression target treshold adjustment
-            while(Math.abs(outputImageSize - expectedOutputSize) > deltaToleranceToTarget && iteration > 0 && countSameOutputSize < 4){
+            while(Math.abs(outputImageSize - expectedOutputSize) > deltaToleranceToTarget && iteration > 0 && countSameOutputSize < 3){
                 qt.compressQuadTree(inputMode, treshold, minimumBlockSize);
                 qt.reconstructQuadTree(output);
                 outputImageSize = ProcessImage.getImageSize(output, absoluteImageOutputAddress);
 
-                System.out.println("Iteration " + (max_iteration - iteration + 1) + " => threshold: " + treshold + " | output size: " + outputImageSize + " | expected output size: " + expectedOutputSize);
+                System.out.println("Compression " + (max_iteration - iteration + 1) + "/30 => threshold: " + treshold + " | compression percentage: " + String.format("%.2f", ((1 - (((double)outputImageSize)/inputImageSize)) * 100)) + "%");
 
                 if(outputImageSize > expectedOutputSize){
                     if(!firstIteration && !surpassTarget){
-                        delta_change /= 2.2;
+                        delta_change /= (inputMode == 5) ? 1.8 : 2.2;
                     }
                     treshold += delta_change;
                     surpassTarget = true;
                 }
                 else if ( outputImageSize < expectedOutputSize){
                     if(!firstIteration && surpassTarget){
-                        delta_change /= 2.2;
+                        delta_change /= (inputMode == 5) ? 1.8 : 2.2;
                     }
                     treshold -= delta_change;
                     surpassTarget = false;
@@ -242,16 +244,44 @@ public class Main{
             qt.compressQuadTree(inputMode, treshold, minimumBlockSize);
             qt.reconstructQuadTree(output);
         }
+
+        // Save output image
         ProcessImage.saveImage(output, absoluteImageOutputAddress);
+        System.out.println("\n\n\nSave image success!");
         long endTime = System.currentTimeMillis();
 
+        // Gif write & save
+        int maxDepth = qt.getDepth(); 
+        List<BufferedImage> frames = new ArrayList<>();
+
+        // Gif 1 depth per frame
+        for (int depth = 1; depth <= maxDepth; depth++) {
+            BufferedImage frameImage = new BufferedImage(imageFile.getWidth(), imageFile.getHeight(), imageFile.getType());
+            qt.reconstructQuadTreeForGIF(frameImage, 1, depth);
+            BufferedImage frameCopy = new BufferedImage(frameImage.getWidth(), frameImage.getHeight(), frameImage.getType());
+            frameCopy.getGraphics().drawImage(frameImage, 0, 0, null);
+            frames.add(frameCopy);
+        }
+
+        try {
+            FileImageOutputStream gifOutputStream = new FileImageOutputStream(new File(absoluteGifOutputAddress));
+            GifWriter gifWriter = new GifWriter(gifOutputStream, imageFile.getType(), 500, true);
+            for (BufferedImage frame : frames) {
+                gifWriter.writeToSequence(frame);
+            }
+            gifWriter.close();
+            gifOutputStream.close();
+            System.out.println("Save gif success!");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         // Output
-        System.out.println("\n\n\n\n\n\n\nExecution Time : " + (endTime - startTime) + "ms");
+        System.out.println("\n\n\nExecution Time : " + (endTime - startTime) + "ms");
         System.out.println("Image before compression size : " + inputImageSize + " bytes");
         File output_file = new File(absoluteImageOutputAddress);
         System.out.println("Image after compression size : " + output_file.length() + " bytes");
-        double compression_percentage = (1 - ((double)outputImageSize/inputImageSize)) * 100.0;
+        double compression_percentage = (1 - ((double)output_file.length()/inputImageSize)) * 100.0;
         System.out.println("Compression percentage : " + String.format("%.2f", compression_percentage) + "%");
         System.out.println("QuadTree depth : " + qt.getDepth());
         System.out.println("QuadTree nodes : " + qt.getNodes());

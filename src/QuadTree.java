@@ -140,7 +140,7 @@ public class QuadTree {
         return this.northEast == null && this.northWest == null && this.southEast == null && this.southWest == null;
     }
 
-    // Method to recreate new compressed QuadTree ( divide and conquer algo)
+    // Method to recreate new compressed QuadTree (divide and conquer algo)
     public void compressQuadTree(int inputMode, double treshold, int blockSizeConstrain){ 
 
         // end recursion if pixel size can no longer be devided
@@ -198,7 +198,7 @@ public class QuadTree {
                 sw.compressQuadTree(inputMode, treshold, blockSizeConstrain);
             }
         }
-        else{ // SSIM method, slight different
+        else{ // SSIM method, slight different (compare before compressed and after compressed)
             if(nw.getArea() > blockSizeConstrain && ErrorMeasurement.errorValue(this,inputMode) > treshold){
                 nw.compressQuadTree(inputMode, treshold, blockSizeConstrain);
             }
@@ -245,6 +245,32 @@ public class QuadTree {
         }
     }
 
+    // Gif writer QuadTree (create frames every 1 depth of node until deepest node depth)
+    public void reconstructQuadTreeForGIF(BufferedImage output, int currentDepth, int depthLimit) {
+        if (this.isLeaf() || currentDepth >= depthLimit) {
+            for (int y = this.startY(); y < this.endY(); y++) {
+                for (int x = this.startX(); x < this.endX(); x++) {
+                    Color newColor = new Color(this.getRedIntensityValue(), this.getGreenIntensityValue(), this.getBlueIntensityValue());
+                    output.setRGB(x, y, newColor.getRGB());
+                }
+            }
+            return;
+        } else {
+            if (this.northEast != null) {
+                this.northEast.reconstructQuadTreeForGIF(output, currentDepth + 1, depthLimit);
+            }
+            if (this.northWest != null) {
+                this.northWest.reconstructQuadTreeForGIF(output, currentDepth + 1, depthLimit);
+            }
+            if (this.southEast != null) {
+                this.southEast.reconstructQuadTreeForGIF(output, currentDepth + 1, depthLimit);
+            }
+            if (this.southWest != null) {
+                this.southWest.reconstructQuadTreeForGIF(output, currentDepth + 1, depthLimit);
+            }
+        }
+    }
+
     // Maximum QuadTree depth
     public int getDepth(){
         if (this.isLeaf()){
@@ -269,7 +295,6 @@ public class QuadTree {
             if(this.northWest != null) count+= this.northWest.getNodes();
             if(this.southEast != null) count+= this.southEast.getNodes();
             if(this.southWest != null) count+= this.southWest.getNodes();
-
             return count;
         }
     }

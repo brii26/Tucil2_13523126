@@ -199,20 +199,18 @@ class ErrorMeasurement{
         double greenParentVariance = specificVariance(parent)[1];
         double blueParentVariance  = specificVariance(parent)[2];
     
-        double ssimRed = ((2 * meanRedChild * meanRedParent + c1) * (2 * redCovariance + c2)) /
-                            ((Math.pow(meanRedChild, 2) + Math.pow(meanRedParent, 2) + c1) * (redChildVariance + redParentVariance + c2));
+        // Partial SSIM value
+        double ssimRed = ((2 * meanRedChild * meanRedParent + c1) * (2 * redCovariance + c2)) / ((Math.pow(meanRedChild, 2) + Math.pow(meanRedParent, 2) + c1) * (redChildVariance + redParentVariance + c2));
+        double ssimGreen = ((2 * meanGreenChild * meanGreenParent + c1) * (2 * greenCovariance + c2)) / ((Math.pow(meanGreenChild, 2) + Math.pow(meanGreenParent, 2) + c1) * (greenChildVariance + greenParentVariance + c2));
+        double ssimBlue = ((2 * meanBlueChild * meanBlueParent + c1) * (2 * blueCovariance + c2)) / ((Math.pow(meanBlueChild, 2) + Math.pow(meanBlueParent, 2) + c1) * (blueChildVariance + blueParentVariance + c2));
     
-        double ssimGreen = ((2 * meanGreenChild * meanGreenParent + c1) * (2 * greenCovariance + c2)) /
-                            ((Math.pow(meanGreenChild, 2) + Math.pow(meanGreenParent, 2) + c1) * (greenChildVariance + greenParentVariance + c2));
-    
-        double ssimBlue = ((2 * meanBlueChild * meanBlueParent + c1) * (2 * blueCovariance + c2)) /
-                            ((Math.pow(meanBlueChild, 2) + Math.pow(meanBlueParent, 2) + c1) * (blueChildVariance + blueParentVariance + c2));
-    
+        // SSIM value
         double ssimRGB = 0.2989 * ssimRed + 0.5787 * ssimGreen + 0.1140 * ssimBlue; // ITU-R BT.601 standard weight constants
     
         return ssimRGB;
     }
 
+    // Universal method error measurement
     public static double errorValue(QuadTree qt, int input){
         if(input == 1) return variance(qt);
         else if (input == 2) return meanAbsoluteDeviation(qt);
