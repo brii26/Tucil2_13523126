@@ -21,7 +21,6 @@ public class ProcessImage {
         catch (IOException e){
             e.printStackTrace();
         }
-
     }
 
     // Extension validation (.png, .jpg, .jpeg)

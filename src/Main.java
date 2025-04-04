@@ -33,7 +33,7 @@ public class Main{
             System.out.println("\nSelect the following Error Measurement Methods :");
             System.out.println("1. Variance");
             System.out.println("2. Mean Absolute Deviation (MAD)");
-            System.out.println("3. Max Pixel Defference");
+            System.out.println("3. Max Pixel Difference");
             System.out.println("4. Entropy");
             System.out.println("5. Structural Similarity Index (SSIM)");
             System.out.print("mode (1/2/3/4/5): ");
@@ -56,7 +56,7 @@ public class Main{
             System.out.print("Threshold ");
             // ideal range 
             if(inputMode == 1){
-                System.out.print("Variance (ideal range [0..16384)) : "); // 16384 -> 128^2
+                System.out.print("Variance (ideal range [0..16384]) : "); // 16384 -> 128^2
             }else if(inputMode == 2){
                 System.out.print("Mean Absolute Deviation (ideal range [0..127.5]) : ");
             }else if(inputMode == 3){
@@ -176,7 +176,8 @@ public class Main{
 
         // Bonus compression target variable helper
         int max_iteration = 30; 
-        long inputImageSize = ProcessImage.getImageSize(imageFile, absoluteImageInputAddress);
+        File input_file = new File(absoluteImageInputAddress);
+        long inputImageSize = input_file.length();
         long outputImageSize = -1;
         double delta_change = -1;
         double deltaToleranceToTarget = (inputMode != 5) ? 100 : 500;
@@ -213,6 +214,7 @@ public class Main{
                 qt.reconstructQuadTree(output);
                 outputImageSize = ProcessImage.getImageSize(output, absoluteImageOutputAddress);
 
+                //This is not a debug print, this shows threshold progress (OK)
                 System.out.println("Compression " + (max_iteration - iteration + 1) + "/30 => threshold: " + treshold + " | compression percentage: " + String.format("%.2f", ((1 - (((double)outputImageSize)/inputImageSize)) * 100)) + "%");
 
                 if(outputImageSize > expectedOutputSize){
